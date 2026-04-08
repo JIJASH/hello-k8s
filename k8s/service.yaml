@@ -13,3 +13,20 @@ spec:
 
   #ClusterIP means the service is only accessible within the cluster. For external access, you could use NodePort or LoadBalancer, but for this example, ClusterIP is sufficient since we'll access it through an Ingress.
   #nodePort(accessible from outside on a specific port) would expose the service on a port on each node, and LoadBalancer(used in cloud providers) would provision an external load balancer (if supported by the cloud provider).
+
+
+  # for nodeport: 
+  # ports:
+  # - protocol: TCP
+  #   port: 80
+  #   targetPort: 5555
+  #   nodePort: 30100
+  # type: NodePort
+
+
+  # for loadbalancer:
+  # ports:
+  # - protocol: TCP
+  #   port: 80
+  #   targetPort: 5555
+  # type: LoadBalancer
