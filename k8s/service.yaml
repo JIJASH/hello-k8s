@@ -1,0 +1,15 @@
+apiVersion: v1    #v1 is the core Kubernetes API — used for basic resources like Services, Pods, ConfigMaps.
+kind: Service
+metadata:
+  name: hello-k8s
+spec:
+  selector:
+    app: hello-k8s    #connects the pods with this label
+  ports:
+    - protocol: TCP
+      port: 80    #exposes the service on this port
+      targetPort: 5555    #forwards traffic to this port on the pods
+  type: ClusterIP     #default type, exposes the service on a cluster-internal IP
+
+  #ClusterIP means the service is only accessible within the cluster. For external access, you could use NodePort or LoadBalancer, but for this example, ClusterIP is sufficient since we'll access it through an Ingress.
+  #nodePort(accessible from outside on a specific port) would expose the service on a port on each node, and LoadBalancer(used in cloud providers) would provision an external load balancer (if supported by the cloud provider).

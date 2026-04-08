@@ -1,0 +1,34 @@
+apiVersion: apps/v1   #which kubernetes API version to use for this object
+kind: Deployment  #type of resource we want to create
+metadata: 
+  name: hello-k8s
+  labels:
+    app: hello-k8s
+spec:   #everything under here is actual configuration for the deployment
+  replicas: 3   #runs 3 pods simultaneously
+
+  #This tells the Deployment which pods to manage. It looks for pods with the label app: hello-k8s and manages those. This is how Deployment and Pods are linked together.
+  selector:
+    matchLabels:
+      app: hello-k8s
+
+  #This is the blueprint for each Pod the Deployment creates. Everything under here defines what each pod looks like.
+  template:
+    metadata:
+      labels:
+        app: hello-k8s
+        
+    #Each pod runs one or more containers. Here we define a container named hello-k8s.
+    spec:
+      containers:
+      - name: hello-k8s
+        image: jijashshrestha/hello-k8s:v1
+        ports:
+        - containerPort: 5555   #tells Kubernetes which port the app uses.
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+          requests:
+            memory: "64Mi"
+            cpu: "250m"

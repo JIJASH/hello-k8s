@@ -1,0 +1,13 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: hello-k8s-job
+spec:
+  template:
+    spec:
+      containers:
+      - name: hello-job
+        image: jijashshrestha/hello-k8s:v1
+        command: ["python", "-c", "print('Job says: Hello, JIJASH!')"]
+      restartPolicy: Never
+  backoffLimit: 3

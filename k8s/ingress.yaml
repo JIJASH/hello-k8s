@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1    #networking API - handles Ingress resources
+kind: Ingress   #Ingress is like a smart doorman for your cluster. It receives external HTTP traffic and routes it to the right service based on the domain or path.
+metadata:
+  name: hello-k8s
+  #annotations — extra configuration options for the Ingress controller. 
+  #rewrite-target: / — rewrites the URL path to / before forwarding to the service. This is useful if your application expects requests at the root path.
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  #ingressClassName: nginx — specifies that this Ingress should be handled by the NGINX Ingress Controller. This is important if you have multiple Ingress controllers in your cluster
+  ingressClassName: nginx
+  rules:
+  #Which domain this rule applies to. When a request comes in for hello-k8s.local, this rule handles it.
+  - host: hello-k8s.local   #the domain name to access the service. You can use a fake domain like hello-k8s.local and map it to your Minikube IP in your /etc/hosts file for testing.  
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: hello-k8s
+            port:
+              number: 80
