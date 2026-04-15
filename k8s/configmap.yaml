@@ -1,0 +1,28 @@
+apiVersion: v1    #configmap uses the core Kubernetes API (v1) since it's a basic resource type
+kind: ConfigMap   #Tells Kubernetes this is a ConfigMap resource.
+metadata:
+  name: hello-k8s-config      #Name of this ConfigMap. We'll reference this name in deployment.yaml.
+data:
+  APP_ENV: "production"
+  APP_MESSAGE: "Hello from Jijash's Kubernetes !"
+
+
+# if we have to inject all keys as env variables without specifying each one, we can use envFrom:
+#envFrom:
+#        - configMapRef:
+#           name: hello-k8s-config
+
+
+
+#if we have to mount the secret as a file inside the container, we can use volumeMounts and volumes:
+#spec:
+#      containers:
+#      - name: hello-k8s
+#        image: jijashshrestha/hello-k8s:v3
+#        volumeMounts:
+#        - name: config-volume
+#          mountPath: /etc/config
+#      volumes:
+#      - name: config-volume
+#        configMap:
+#          name: hello-k8s-config

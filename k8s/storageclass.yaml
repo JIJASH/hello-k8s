@@ -1,0 +1,7 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: standard
+provisioner: k8s.io/minikube-hostpath   #this tells kubernetes how to create the storage. On minikube we use minikube-hostpath, but on cloud providers we would use something like aws-ebs or gcp-pd which stores data on your Ubuntu Server's actual filesystem.
+reclaimPolicy: Retain     # defines what happens to the storage when the PVC is deleted. Retain means the storage will be kept even if the PVC is deleted, while Delete means it will be deleted along with the PVC.
+volumeBindingMode: Immediate    # when to create the actual storage ? Immediate means the storage will be created as soon as the PVC is created, while WaitForFirstConsumer means wait untill pod actually needs it.

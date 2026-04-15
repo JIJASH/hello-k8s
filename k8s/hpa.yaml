@@ -1,0 +1,29 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hello-k8s-hpa
+spec:
+
+  # The scaleTargetRef field specifies the target resource that the HPA will monitor and scale. In this case, it is set to a Deployment named "hello-k8s". The HPA will automatically adjust the number of replicas of this Deployment based on the specified metrics.
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: hello-k8s
+  # Never go below 2 replicas, and never go above 10 replicas. The HPA will ensure that the number of replicas of the target Deployment stays within this range based on the observed metrics.
+  minReplicas: 2
+  maxReplicas: 10
+  # scale up when the average CPU utilization across all pods exceeds 50%, Scale down when average CPU usage drops below 50%
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 50
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 70
+        

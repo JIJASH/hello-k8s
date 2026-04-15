@@ -25,3 +25,17 @@ spec:
           requests:
             memory: "64Mi"
             cpu: "250m"
+        # redis stores its data in /data by default -- we mount our persistent volume there so data survives restarts and rescheduling of pods.    
+        volumeMounts:
+        - name: redis-data
+          mountPath: /data
+  # this is unique t StatefulSets -- it automatically creates a seperate PersistentVolumeClaim for each replica of the StatefulSet. This means that each replica will have its own storage, which is important for stateful applications like databases.         
+  volumeClaimTemplates:
+  - metadata:
+      name: redis-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: standard
+      resources:
+        requests:
+          storage: 1Gi

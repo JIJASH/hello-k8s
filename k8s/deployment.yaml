@@ -6,7 +6,14 @@ metadata:
     app: hello-k8s
 spec:   #everything under here is actual configuration for the deployment
   replicas: 3   #runs 3 pods simultaneously
+  
+  #rolling update strategy is the default strategy for Deployments. It allows you to update your application without downtime by gradually replacing old pods with new ones. When you update the Deployment, it will create new pods with the updated configuration and then terminate the old pods once the new ones are running and healthy. This ensures that there is always a minimum number of available pods to serve traffic during the update process.
 
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0  # how many pods can be unavailable during the update process. Setting this to 0 means that all pods must be available at all times during the update, ensuring zero downtime.
+      maxSurge: 1        # how many extra pods can be created during the update process. Setting this to 1 means that the Deployment can create one additional pod above the desired number of replicas during the update, allowing for a smooth transition without downtime.
   #This tells the Deployment which pods to manage. It looks for pods with the label app: hello-k8s and manages those. This is how Deployment and Pods are linked together.
   selector:
     matchLabels:
@@ -22,7 +29,7 @@ spec:   #everything under here is actual configuration for the deployment
     spec:
       containers:
       - name: hello-k8s
-        image: jijashshrestha/hello-k8s:v1
+        image: jijashshrestha/hello-k8s:v5
         ports:
         - containerPort: 5555   #tells Kubernetes which port the app uses.
         resources:
@@ -32,3 +39,49 @@ spec:   #everything under here is actual configuration for the deployment
           requests:
             memory: "64Mi"
             cpu: "250m"
+        # Method 1: Specific keys from ConfigMap and Secret
+        env:
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: hello-k8s-config
+              key: REDIS_HOST
+        - name: REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: hello-k8s-config
+              key: REDIS_PORT
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: hello-k8s-secret
+              key: DB_PASSWORD
+        - name: API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: hello-k8s-secret
+              key: API_KEY
+
+        # Method 2: All keys from ConfigMap
+        envFrom:
+        - configMapRef:
+            name: hello-k8s-config
+
+        # Method 3: Mount config file
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/config
+        - name: properties-volume
+          mountPath: /etc/properties
+      
+      
+      volumes:
+      - name: config-volume
+        configMap:
+          name: hello-k8s-config
+      - name: properties-volume
+        configMap:
+          name: hello-k8s-config
+          items:
+          - key: app.properties
+            path: app.properties
