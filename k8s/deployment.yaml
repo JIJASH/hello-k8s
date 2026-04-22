@@ -27,6 +27,7 @@ spec:   #everything under here is actual configuration for the deployment
         
     #Each pod runs one or more containers. Here we define a container named hello-k8s.
     spec:
+      serviceAccountName: hello-k8s-sa  #associate the service account with the pods created by this deployment
       containers:
       - name: hello-k8s
         image: jijashshrestha/hello-k8s:v5

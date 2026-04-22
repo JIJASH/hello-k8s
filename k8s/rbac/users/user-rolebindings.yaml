@@ -1,0 +1,43 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: john-rolebinding
+  namespace: default
+subjects:
+- kind: User
+  name: john
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: developer-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# Sarah - QA RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: sarah-rolebinding
+  namespace: default
+subjects:
+- kind: User
+  name: sarah
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: qa-role
+  apiGroup: rbac.authorization.k8s.io
+---
+# Mike - DevOps ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: mike-clusterrolebinding
+subjects:
+- kind: User
+  name: mike
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: devops-clusterrole
+  apiGroup: rbac.authorization.k8s.io
