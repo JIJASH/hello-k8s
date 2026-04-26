@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-flask-ingress
+  namespace: default
+spec:
+  # this policy applies to hello-k8s pods in the default namespace
+  podSelector:
+    matchLabels:
+      app: hello-k8s
+  #only controlling incoming traffic to hello-k8s pods
+  policyTypes:
+  - Ingress
+  # allow traffic from the ingress-nginx namespace (only the ingress controller can send traffic to hello-k8s pods, Nobody else can directly reach hello-k8s pods)
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: ingress-nginx
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 5555

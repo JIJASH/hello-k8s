@@ -1,0 +1,12 @@
+#deny all ingress and egress traffic to and from pods in the default namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: default
+spec:
+  podSelector: {}  # This applies to all pods in the default namespace
+  policyTypes:
+  - Ingress
+  - Egress
+  # No ingress or egress rules means all traffic is denied by default
