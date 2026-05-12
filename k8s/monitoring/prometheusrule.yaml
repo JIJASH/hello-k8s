@@ -1,0 +1,127 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: hello-k8s-rules
+  namespace: monitoring
+  labels:
+    release: prometheus
+spec:
+  groups:
+  - name: hello-k8s.rules
+    interval: 30s
+    rules:
+
+    # 1. Pod Down Alert
+    - alert: HelloK8sPodDown
+      expr: |
+        kube_pod_status_phase{
+          namespace="default",
+          pod=~"hello-k8s.*",
+          phase!="Running"
+        } == 1
+      for: 1m
+      labels:
+        severity: critical
+        team: backend
+      annotations:
+        summary: "Pod {{ $labels.pod }} is not running"
+        description: "Pod {{ $labels.pod }} has been in {{ $labels.phase }} state for more than 1 minute"
+
+    # 2. High Error Rate
+    - alert: HelloK8sHighErrorRate
+      expr: |
+        rate(flask_http_request_total{status=~"5.."}[5m])
+        /
+        rate(flask_http_request_total[5m])
+        * 100 > 5
+      for: 2m
+      labels:
+        severity: warning
+        team: backend
+      annotations:
+        summary: "High error rate on hello-k8s"
+        description: "Error rate is {{ printf \"%.2f\" $value }}% for last 5 minutes"
+
+    # 3. High Memory Usage
+    - alert: HelloK8sHighMemory
+      expr: |
+        container_memory_usage_bytes{
+          namespace="default",
+          pod=~"hello-k8s.*"
+        }
+        /
+        container_spec_memory_limit_bytes{
+          namespace="default",
+          pod=~"hello-k8s.*"
+        }
+        * 100 > 80
+      for: 5m
+      labels:
+        severity: warning
+        team: backend
+      annotations:
+        summary: "High memory usage on {{ $labels.pod }}"
+        description: "Memory usage is {{ printf \"%.2f\" $value }}% of limit"
+
+    # 4. Pod Restarting
+    - alert: HelloK8sPodRestarting
+      expr: |
+        rate(kube_pod_container_status_restarts_total{
+          namespace="default",
+          pod=~"hello-k8s.*"
+        }[15m]) * 900 > 3
+      for: 0m
+      labels:
+        severity: warning
+        team: backend
+      annotations:
+        summary: "Pod {{ $labels.pod }} restarting frequently"
+        description: "Pod restarted {{ printf \"%.0f\" $value }} times in 15 minutes"
+
+    # 5. Deployment Replicas Mismatch
+    - alert: HelloK8sReplicasMismatch
+      expr: |
+        kube_deployment_spec_replicas{
+          namespace="default",
+          deployment="hello-k8s"
+        }
+        !=
+        kube_deployment_status_replicas_available{
+          namespace="default",
+          deployment="hello-k8s"
+        }
+      for: 5m
+      labels:
+        severity: critical
+        team: backend
+      annotations:
+        summary: "Deployment replicas mismatch"
+        description: "Desired {{ $value }} replicas not available"
+
+    # 6. Redis Down
+    - alert: RedisDown
+      expr: |
+        kube_pod_status_phase{
+          namespace="default",
+          pod=~"redis.*",
+          phase!="Running"
+        } == 1
+      for: 1m
+      labels:
+        severity: critical
+        team: backend
+      annotations:
+        summary: "Redis is down"
+        description: "Redis pod {{ $labels.pod }} is not running"
+
+    # 7. No Requests (Dead service)
+    - alert: HelloK8sNoTraffic
+      expr: |
+        rate(flask_http_request_total[5m]) == 0
+      for: 10m
+      labels:
+        severity: warning
+        team: backend
+      annotations:
+        summary: "No traffic to hello-k8s"
+        description: "No requests received in last 10 minutes"

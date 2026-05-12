@@ -1,0 +1,57 @@
+apiVersion: moitoring.coreos.com/v1
+kind: AlertmanagerConfig
+metadata:
+  name: hello-k8s-alertmanager-config
+  namespace: monitoring
+  labels: 
+    alertmanagerConfig: hello-k8s
+spec:
+  route:
+    groupBy: ['alertname', 'severity']
+    groupWait: 30s
+    groupInterval: 5m
+    repeatInterval: 12h
+    receiver: 'email-receiver'
+    routes:
+    - matchers:
+      - name: severity
+        value: 'critical'
+      receiver: 'email-receiver'
+      groupWait: 0s
+    - matchers:
+      - name: severity
+        value: 'warning'
+      receiver: 'email-receiver'
+      groupWait: 1m
+  receivers:
+  - name: 'email-receiver'
+    emailConfigs:
+    - to: 'jijashstha001@gmail.com'
+      from: 'jijashstha001@gmail.com'
+      smarthost: 'smtp.gmail.com:587'
+      authUsername: 'jijashstha001@gmail.com'
+      authPassword:
+        name: alertmanager-email-secret
+        key: password
+      requireTLS: true
+      sendResolved: true
+      headers:
+        Subject: >-
+          [{{ .Status | toUpper }}] {{ .GroupLabels.alertname }}
+      html: |
+        <html>
+          <body>
+            <h2>
+              {{ if eq .Status "firing" }}🔴{{ else }}✅{{ end }}
+              {{ .GroupLabels.alertname }}
+            </h2>
+            <p><b>Status:</b> {{ .Status | toUpper }}</p>
+            <p><b>Severity:</b> {{ .GroupLabels.severity }}</p>
+            {{ range .Alerts }}
+            <hr>
+            <p><b>Summary:</b> {{ .Annotations.summary }}</p>
+            <p><b>Description:</b> {{ .Annotations.description }}</p>
+            <p><b>Started:</b> {{ .StartsAt }}</p>
+            {{ end }}
+          </body>
+        </html>

@@ -28,11 +28,26 @@ spec:   #everything under here is actual configuration for the deployment
     #Each pod runs one or more containers. Here we define a container named hello-k8s.
     spec:
       serviceAccountName: hello-k8s-sa  #associate the service account with the pods created by this deployment
+      securityContext:
+        runAsNonRoot: true  #enforce that the container must run as a non-root user
+        runAsUser: 1000  #run the container as non-root user with UID 1000
+        runAsGroup: 3000 #run the container with GID 3000
+        fsGroup: 2000    #set the group ownership of any files created by the container to GID 2000
+        seccompProfile:
+          type: RuntimeDefault  #use the default seccomp profile provided by the container runtime, which helps to restrict the system calls that the container can make, enhancing security by reducing the attack surface.
+
       containers:
       - name: hello-k8s
-        image: jijashshrestha/hello-k8s:v5
+        image: jijashshrestha/hello-k8s:v7
         ports:
         - containerPort: 5555   #tells Kubernetes which port the app uses.
+
+        securityContext:
+          allowPrivilegeEscalation: false  #prevent the container from gaining additional privileges, which can help mitigate certain types of security vulnerabilities.
+          capabilities:
+            drop: ["ALL"]  #drop all Linux capabilities from the container, which can help reduce the attack surface and improve security by limiting what the container can do on the host system.
+          readOnlyRootFilesystem: true  #enforce a read-only root filesystem for the container
+
         resources:
           limits:
             memory: "128Mi"
@@ -72,10 +87,13 @@ spec:   #everything under here is actual configuration for the deployment
         volumeMounts:
         - name: config-volume
           mountPath: /etc/config
+          readOnly: true 
         - name: properties-volume
           mountPath: /etc/properties
-      
-      
+          readOnly: true
+        - name: tmp-volume
+          mountPath: /tmp
+
       volumes:
       - name: config-volume
         configMap:
@@ -86,3 +104,5 @@ spec:   #everything under here is actual configuration for the deployment
           items:
           - key: app.properties
             path: app.properties
+      - name: tmp-volume
+        emptyDir: {}    #temporary empty directory ; created fresh for each pod ; deleted when pod dies ; perfect for temporary files !

@@ -1,0 +1,30 @@
+replicas: 1
+minimumMasterNodes: 1
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "500m"
+  limits:
+    memory: "1Gi"
+    cpu: 1000m
+volumeClaimTemplate:
+  resources:
+    requests:
+      storage: 5Gi
+persistence:
+  enabled: true
+
+antiAffinity: "soft"
+
+esJavaOpts: "-Xmx512m -Xms512m"
+service:
+  type: ClusterIP
+
+#Disable security features for testing purposes only -- do not use in production
+
+esConfig:
+  elasticsearch.yml: |
+    xpack.security.enabled: false
+
+rbac:
+  create: true

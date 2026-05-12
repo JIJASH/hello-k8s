@@ -1,0 +1,20 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: hello-k8s-monitor
+  namespace: monitoring
+  labels:
+    release: monitoring
+spec:
+  # look for services in the default namespace with the label app: hello-k8s and scrapes services with the label app: hello-k8s
+  namespaceSelector:
+    matchNames:
+    - default
+  selector:
+    matchLabels:
+      app: hello-k8s
+  # scrapes /metrics endpoint of the service every 15 seconds
+  endpoints:
+  - port: http
+    interval: 15s
+    path: /metrics

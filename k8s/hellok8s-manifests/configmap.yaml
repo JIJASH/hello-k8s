@@ -4,7 +4,20 @@ metadata:
   name: hello-k8s-config      #Name of this ConfigMap. We'll reference this name in deployment.yaml.
 data:
   APP_ENV: "production"
-  APP_MESSAGE: "Hello from Jijash's Kubernetes !"
+  APP_MESSAGE: "Hello from Kubernetes!"
+  APP_VERSION: "6.0"
+  APP_PORT: "5555"
+  REDIS_HOST: "redis-0.redis.default.svc.cluster.local"
+  REDIS_PORT: "6379"
+  DB_HOST: "redis-service"
+  FEATURE_DARK_MODE: "true"
+  FEATURE_BETA: "false"
+  app.properties: |
+    environment=production
+    version=6.0
+    debug=false
+    max_connections=100
+    redis_host=redis-0.redis.default.svc.cluster.local
 
 
 # if we have to inject all keys as env variables without specifying each one, we can use envFrom:
