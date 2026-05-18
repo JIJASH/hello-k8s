@@ -1,11 +1,36 @@
+from asyncio.log import logger
+
 from flask import Flask, jsonify
 import os
 import socket
 import redis
 from prometheus_flask_exporter import PrometheusMetrics
+import logging
+import json
+from datetime import datetime, timezone
 
 app = Flask(__name__)
+class JSONFormatter(logging.Formatter):
+    def format(self, record):
+        log_data = {
+            'timestamp': datetime.now(timezone.utc).isoformat(),
+            'level': record.levelname,
+            'message': record.getMessage(),
+            'pod': os.environ.get('HOSTNAME', 'unknown'),
+            'environment': os.environ.get('APP_ENV', 'unknown'),
+            'version': os.environ.get('APP_VERSION', 'unknown'),
+            'logger': record.name
+        }
+        if record.exc_info:
+            log_data['exception'] = self.formatException(record.exc_info)
+        return json.dumps(log_data)
 
+# Setup JSON logging
+handler = logging.StreamHandler()
+handler.setFormatter(JSONFormatter())
+logger = logging.getLogger('hello-k8s')
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
 # PrometheusMetrics automatically creates /metrics endpoint
 # No need to define it manually!
 metrics = PrometheusMetrics(app)
@@ -26,11 +51,14 @@ def get_redis():
 
 @app.route("/")
 def hello():
+    logger.info("Home page accessed")
     try:
         r = get_redis()
         visits = r.incr("visit_counter")
+        logger.info(f"Visit counter incremented to {visits}")
         redis_status = "Connected ✅"
     except Exception as e:
+        logger.error(f"Redis connection failed: {str(e)}")
         visits = "Redis unavailable"
         redis_status = f"Error: {str(e)}"
 

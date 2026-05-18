@@ -1,17 +1,23 @@
-daemonSetVolumes: 
+daemonSetVolumes:
   - name: varlog
     hostPath:
       path: /var/log
   - name: varlibdockercontainers
     hostPath:
       path: /var/lib/docker/containers
+  - name: suricata-logs
+    hostPath:
+      path: /var/log/suricata
 
 daemonSetVolumeMounts:
   - name: varlog
     mountPath: /var/log
   - name: varlibdockercontainers
     mountPath: /var/lib/docker/containers
-    readonly: true
+    readOnly: true
+  - name: suricata-logs
+    mountPath: /var/log/suricata
+    readOnly: true
 
 config:
   service: |
@@ -23,15 +29,26 @@ config:
         HTTP_Server    On
         HTTP_Listen    0.0.0.0
         HTTP_Port      2020
-  input: |
+  inputs: |
     [INPUT]
         Name              tail
         Path              /var/log/containers/*.log
-        multiline.parser   docker, cri
+        multiline.parser  docker, cri
         Tag               kube.*
-        Refresh_Interval   5
+        Refresh_Interval  5
         Mem_Buf_Limit     50MB
-        Skip_Long_Lines    On
+        Skip_Long_Lines   On
+
+    [INPUT]
+        Name             tail
+        Path             /var/log/suricata/eve.json
+        Tag              suricata.*
+        Parser           json
+        Refresh_Interval 5
+        Mem_Buf_Limit    50MB
+        Skip_Long_Lines  On
+        DB               /var/log/suricata-flb.db
+
   filters: |
     [FILTER]
         Name                kubernetes
@@ -46,49 +63,65 @@ config:
         K8S-Logging.Exclude On
         Annotations         Off
         Labels              On
-      
-    [FILTER]
-        Name                grep
-        Match               kube.*
-        Exclude             log ^$
 
     [FILTER]
-        Name                modify
-        Match               kube.*
-        Add                 cluster minikube
-        Add                 environment production
+        Name    grep
+        Match   kube.*
+        Exclude log ^$
+
+    [FILTER]
+        Name          modify
+        Match         kube.*
+        Add           cluster minikube
+        Add           environment production
+    
+    [FILTER]
+        Name             modify
+        Match            suricata.*
+        Add              log_source suricata
+        Add              host towerserver-1
 
   outputs: |
     [OUTPUT]
-        Name              es
-        Match             *
-        Host              elasticsearch-master.logging.svc.cluster.local
-        Port              9200
-        Logstash_Format   On
-        Logstash_Prefix   kubernetes
+        Name            es
+        Match           *
+        Host            elasticsearch-master.logging.svc.cluster.local
+        Port            9200
+        Logstash_Format On
+        Logstash_Prefix kubernetes
         Logstash_DateFormat %Y.%m.%d
-        Retry_Limit       False
-        Time_Key          @timestamp
-        Replace_Dots      On
-        Generate_ID       On
+        Retry_Limit     False
+        Time_Key        @timestamp
+        Replace_Dots    On
+        Generate_ID     On
 
+    [OUTPUT]
+        Name             es
+        Match            suricata.*
+        Host             elasticsearch-master.logging.svc.cluster.local
+        Port             9200
+        Logstash_Format  On
+        Logstash_Prefix  suricata
+        Replace_Dots     On
+        Retry_Limit      False
+        Buffer_Size      10MB
   parsers: |
     [PARSER]
-        Name         docker
-        Format       json
-        Time_Key     time
-        Time_Format  %Y-%m-%dT%H:%M:%S.%L
-        Time_Keep    On
+        Name        docker
+        Format      json
+        Time_Key    time
+        Time_Format %Y-%m-%dT%H:%M:%S.%L
+        Time_Keep   On
 
     [PARSER]
-        Name         json
-        Format       json
-        Time_Key     json
-        Time_Format  %Y-%m-%dT%H:%M:%S.%L
+        Name        json
+        Format      json
+        Time_Key    time
+        Time_Format %Y-%m-%dT%H:%M:%S.%L
 
     [PARSER]
-        Name         syslog
-        Format       regex
-        Regex        ^\<(?<pri>[0-9]+)\>(?<time>[^ ]* {1,2}[^ ]* [^ ]*) (?<host>[^ ]*) (?<ident>[a-zA-Z0-9_\/\.\-]*)(?:\[(?<pid>[0-9]+)\])?(?:[^\:]*\:)? *(?<message>.*)$
-        Time_Key     time
-        Time_Format  %b %d %H:%M:%S
+        Name        syslog
+        Format      regex
+        Regex       ^\<(?<pri>[0-9]+)\>(?<time>[^ ]* {1,2}[^ ]* [^ ]*) (?<host>[^ ]*) (?<ident>[a-zA-Z0-9_\/\.\-]*)(?:\[(?<pid>[0-9]+)\])?(?:[^\:]*\:)? *(?<message>.*)$
+        Time_Key    time
+        Time_Format %b %d %H:%M:%S

@@ -38,7 +38,7 @@ spec:   #everything under here is actual configuration for the deployment
 
       containers:
       - name: hello-k8s
-        image: jijashshrestha/hello-k8s:v7
+        image: jijashshrestha/hello-k8s:v8
         ports:
         - containerPort: 5555   #tells Kubernetes which port the app uses.
 
